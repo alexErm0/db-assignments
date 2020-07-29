@@ -43,7 +43,20 @@ async function task_1_1(db) {
  *
  */
 async function task_1_2(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+            OrderID as "Order Id",
+            SUM(OrderDetails.Quantity * OrderDetails.UnitPrice) AS "Order Total Price",
+            ROUND(
+                SUM(OrderDetails.Discount * OrderDetails.Quantity) /
+                SUM(OrderDetails.Quantity * OrderDetails.UnitPrice) * 100, 3
+            ) AS "Total Order Discount, %"
+        FROM OrderDetails
+        GROUP BY OrderId
+        ORDER BY OrderId DESC
+    `);
+    return result[0];
+    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -54,7 +67,14 @@ async function task_1_2(db) {
  *
  */
 async function task_1_3(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+           CustomerId,
+           CompanyName
+        FROM Customers
+        WHERE Country='USA' AND Fax IS NULL
+    `);
+    return result[0];
 }
 
 /**
@@ -67,6 +87,16 @@ async function task_1_3(db) {
  *
  */
 async function task_1_4(db) {
+    /*let result = await db.query(`
+        SELECT
+            Orders.CustomerID as "Customer Id",
+            OrderDetails.Quantity AS "Total Number of Orders",
+            OrderDetails.Quantity / SUM(OrderDetails.Quantity) * 100 AS "% of all orders"
+        FROM Orders
+        INNER JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
+        ORDER BY "% of all orders" DESC, "Customer Id" ASC
+    `);
+    return result[0];*/
     throw new Error("Not implemented");
 }
 
@@ -78,7 +108,17 @@ async function task_1_4(db) {
  *
  */
 async function task_1_5(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+           ProductId,
+           ProductName,
+           QuantityPerUnit
+        FROM Products
+        WHERE ProductName REGEXP '(^[a-f])'
+        ORDER BY ProductName
+    `);
+    return result[0];
+    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -91,7 +131,18 @@ async function task_1_5(db) {
  *
  */
 async function task_1_6(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+           Products.ProductName,
+           Categories.CategoryName,
+           Suppliers.CompanyName as SupplierCompanyName
+        FROM ((Products
+        INNER JOIN Categories ON Products.CategoryID = Categories.CategoryID)
+        INNER JOIN Suppliers ON Products.SupplierID = Suppliers.SupplierID)
+        ORDER BY ProductName, SupplierCompanyName
+    `);
+    return result[0];
+    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -106,7 +157,20 @@ async function task_1_6(db) {
  *
  */
 async function task_1_7(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+           first.EmployeeID as "EmployeeId",
+           CONCAT(first.FirstName, ' ', first.LastName) as "FullName",
+           CASE
+               WHEN first.ReportsTo IS NULL THEN "-"
+               ELSE CONCAT(sec.FirstName, ' ', sec.LastName)
+           END AS "ReportsTo"
+        FROM Employees first
+        LEFT JOIN Employees sec ON first.ReportsTo = sec.EmployeeID
+        ORDER BY EmployeeId
+    `);
+    return result[0];
+    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -118,7 +182,18 @@ async function task_1_7(db) {
  *
  */
 async function task_1_8(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+           Categories.CategoryName,
+           COUNT(Products.CategoryID) as TotalNumberOfProducts
+        FROM Categories
+        INNER JOIN Products ON Categories.CategoryID = Products.CategoryID
+        WHERE Products.CategoryID IN (SELECT CategoryID FROM Products GROUP BY CategoryID)
+        GROUP BY Products.CategoryID
+        ORDER BY CategoryName
+    `);
+    return result[0];
+    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -130,7 +205,15 @@ async function task_1_8(db) {
  *
  */
 async function task_1_9(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+           CustomerID,
+           ContactName
+        FROM Customers
+        WHERE ContactName LIKE 'F__n%'
+    `);
+    return result[0];
+    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -141,7 +224,15 @@ async function task_1_9(db) {
  *
  */
 async function task_1_10(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+           ProductID,
+           ProductName
+        FROM Products
+        WHERE Discontinued = 1
+    `);
+    return result[0];
+    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -154,7 +245,16 @@ async function task_1_10(db) {
  *
  */
 async function task_1_11(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+           ProductName,
+           UnitPrice
+        FROM Products
+        WHERE UnitPrice BETWEEN 5 AND 15
+        ORDER BY UnitPrice, ProductName
+    `);
+    return result[0];
+    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -167,7 +267,19 @@ async function task_1_11(db) {
  *
  */
 async function task_1_12(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+           ProductName,
+           UnitPrice
+        FROM (SELECT 
+            ProductName, UnitPrice 
+            FROM Products 
+            ORDER BY UnitPrice DESC 
+            LIMIT 20) prod
+        ORDER BY UnitPrice, ProductName
+    `);
+    return result[0];
+    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -178,7 +290,16 @@ async function task_1_12(db) {
  *
  */
 async function task_1_13(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+           COUNT(Continued) AS TotalOfCurrentProducts,
+           SUM(Continued) AS TotalOfDiscontinuedProducts
+        FROM (SELECT
+                Discontinued AS Continued
+            FROM Products) prod
+    `);
+    return result[0];
+    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -189,7 +310,16 @@ async function task_1_13(db) {
  *
  */
 async function task_1_14(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+           ProductName,
+           UnitsOnOrder,
+           UnitsInStock
+        FROM Products
+        WHERE UnitsOnOrder > UnitsInStock
+    `);
+    return result[0];
+    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -211,7 +341,16 @@ async function task_1_15(db) {
  *
  */
 async function task_1_16(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+           OrderID,
+           CustomerID,
+           ShipCountry
+        FROM Orders
+        WHERE ShipPostalCode IS NOT NULL
+    `);
+    return result[0];
+    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -224,7 +363,17 @@ async function task_1_16(db) {
  *
  */
 async function task_1_17(db) {
-    throw new Error("Not implemented");
+    let result = await db.query(`
+        SELECT
+           CategoryName,
+           AVG(Products.UnitPrice) AS AvgPrice
+        FROM Categories
+        INNER JOIN Products ON Categories.CategoryID = Products.CategoryID
+        GROUP BY CategoryName
+        ORDER BY AvgPrice DESC, CategoryName
+    `);
+    return result[0];
+    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -248,6 +397,19 @@ async function task_1_18(db) {
  *
  */
 async function task_1_19(db) {
+    /*let result = await db.query(`
+        SELECT
+           Customers.CustomerID,
+           Customers.CompanyName,
+           SUM((OrderDetails.UnitPrice - OrderDetails.Discount) * OrderDetails.Quantity) as "TotalOrdersAmount, $"
+        FROM ((Customers
+        INNER JOIN Orders ON Customers.CustomerID = Orders.CustomerID)
+        INNER JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID)
+        WHERE "TotalOrdersAmount, $" > 10000
+        GROUP BY UnitPrice, CompanyName
+        ORDER BY "TotalOrdersAmount, $" DESC, CustomerID
+    `);
+    return result[0];*/
     throw new Error("Not implemented");
 }
 
