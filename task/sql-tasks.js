@@ -497,11 +497,11 @@ async function task_1_22(db) {
             PricePerItem
         FROM (
             SELECT 
-                CompanyName,
-                CustomerID,
+                Customers.CompanyName,
+                Customers.CustomerID,
                 MAX(OrderDetails.UnitPrice) AS PricePerItem
             FROM Customers
-                NATURAL JOIN Orders
+                INNER JOIN Orders ON Customers.CustomerID = Orders.CustomerID
                 NATURAL JOIN OrderDetails
             GROUP BY  CompanyName
         ) AS inn
