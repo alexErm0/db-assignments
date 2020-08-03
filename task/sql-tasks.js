@@ -502,10 +502,10 @@ async function task_1_22(db) {
                 MAX(OrderDetails.UnitPrice) AS PricePerItem
             FROM Customers
                 INNER JOIN Orders ON Customers.CustomerID = Orders.CustomerID
-                NATURAL JOIN OrderDetails
+                INNER JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
             GROUP BY  CompanyName
         ) AS inn
-            NATURAL JOIN Orders
+            INNER JOIN Orders ON inn.CustomerID = Orders.CustomerID
             INNER JOIN OrderDetails ON PricePerItem = OrderDetails.UnitPrice
                 AND Orders.OrderID = OrderDetails.OrderID
             INNER JOIN Products ON Products.ProductID = OrderDetails.ProductID
