@@ -494,21 +494,18 @@ async function task_1_22(db) {
         SELECT DISTINCT
             CompanyName, 
             ProductName, 
-            PricePerItem
-        FROM (
-            SELECT 
-                Customers.CompanyName,
-                Customers.CustomerID,
-                MAX(OrderDetails.UnitPrice) AS PricePerItem
-            FROM Customers
+            OrderDetails.UnitPrice as PricePerItem
+        FROM Customers
+            INNER JOIN Orders ON Customers.CustomerID = Orders.CustomerID
+            INNER JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
+            INNER JOIN Products ON Products.ProductID = OrderDetails.ProductID
+        WHERE OrderDetails.UnitPrice IN (
+            SELECT MAX(UnitPrice)
+            FROM Customers cust
                 INNER JOIN Orders ON Customers.CustomerID = Orders.CustomerID
                 INNER JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
-            GROUP BY  CompanyName
-        ) AS inn
-            INNER JOIN Orders ON inn.CustomerID = Orders.CustomerID
-            INNER JOIN OrderDetails ON PricePerItem = OrderDetails.UnitPrice
-                AND Orders.OrderID = OrderDetails.OrderID
-            INNER JOIN Products ON Products.ProductID = OrderDetails.ProductID
+            WHERE cust.CompanyName = Customers.CompanyName
+        )
         ORDER BY PricePerItem DESC, CompanyName, ProductName
     `);
     return result[0];
