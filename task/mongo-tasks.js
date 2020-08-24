@@ -93,7 +93,6 @@ async function task_1_2(db) {
         {$sort: {"Order Id": -1}}
     ]).toArray();
     return result;
-    /*throw new Error("Not implemented");*/
 }
 
 /**
@@ -242,7 +241,17 @@ async function task_1_7(db) {
                 _id: 0,
                 EmployeeID: 1,
                 "FullName": {$concat: ["$TitleOfCourtesy", "$FirstName", " ", "$LastName"]},
-                ReportsTo: {$ifNull: [{$concat: [{$arrayElemAt: ["$Reporters.FirstName", 0]}, " ", {$arrayElemAt: ["$Reporters.LastName", 0]}]}, "-"]}
+                ReportsTo: {
+                    $ifNull: [
+                        {
+                            $concat: [
+                                {$arrayElemAt: ["$Reporters.FirstName", 0]},
+                                " ",
+                                {$arrayElemAt: ["$Reporters.LastName", 0]}
+                            ]
+                        }, "-"
+                    ]
+                }
             }
         },
         {$sort: {EmployeeID: 1}}
@@ -587,16 +596,47 @@ async function task_1_19(db) {
         {
             $lookup: {
                 from: "customers",
-                localField: "CustomerID",
-                foreignField: "CustomerID",
+                let: {"customerId": "$CustomerID"},
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 0,
+                            "CustomerID": 1,
+                            "CompanyName": 1
+                        }
+                    },
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ["$CustomerID", "$$customerId"]
+                            }
+                        }
+                    }
+                ],
                 as: "Customers"
             }
         },
         {
             $lookup: {
                 from: "order-details",
-                localField: "OrderID",
-                foreignField: "OrderID",
+                let: {"orderId": "$OrderID"},
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 0,
+                            "OrderID": 1,
+                            "UnitPrice": 1,
+                            "Quantity": 1
+                        }
+                    },
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ["$OrderID", "$$orderId"]
+                            }
+                        }
+                    }
+                ],
                 as: "OrderDetails"
             }
         },
@@ -647,16 +687,48 @@ async function task_1_20(db) {
         {
             $lookup: {
                 from: "employees",
-                localField: "EmployeeID",
-                foreignField: "EmployeeID",
+                let: {"employeeId": "$EmployeeID"},
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 0,
+                            "EmployeeID": 1,
+                            "FirstName": 1,
+                            "LastName": 1
+                        }
+                    },
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ["$EmployeeID", "$$employeeId"]
+                            }
+                        }
+                    }
+                ],
                 as: "Employees"
             }
         },
         {
             $lookup: {
                 from: "order-details",
-                localField: "OrderID",
-                foreignField: "OrderID",
+                let: {"orderId": "$OrderID"},
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 0,
+                            "OrderID": 1,
+                            "UnitPrice": 1,
+                            "Quantity": 1
+                        }
+                    },
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ["$OrderID", "$$orderId"]
+                            }
+                        }
+                    }
+                ],
                 as: "OrderDetails"
             }
         },
@@ -666,7 +738,15 @@ async function task_1_20(db) {
         {
             $group: {
                 _id: "$EmployeeID",
-                employeeName: {$push: {$concat: [{$arrayElemAt: ["$Employees.FirstName", 0]}, " ", {$arrayElemAt: ["$Employees.LastName", 0]}]}},
+                employeeName: {
+                    $push: {
+                        $concat: [
+                            {$arrayElemAt: ["$Employees.FirstName", 0]},
+                            " ",
+                            {$arrayElemAt: ["$Employees.LastName", 0]}
+                        ]
+                    }
+                },
                 "TotalCount": {
                     $sum: {
                         $multiply: [
