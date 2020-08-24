@@ -39,7 +39,6 @@ async function before(db) {
  *   8. That's possible to rewrite a few last steps to merge a few pipeline steps in one.
  */
 async function task_3_1(db) {
-    throw new Error("Not implemented"); //remove the line before starting the task
 
     const result = await db.collection('opportunities').aggregate([
         {
@@ -57,21 +56,7 @@ async function task_3_1(db) {
                             "$ne" : null
                         }
                     }
-                }
-            }
-        },
-        {
-            "$unwind" : "$contacts"
-        },
-        {
-            "$match" : {
-                "contacts.datePublished" : {
-                    "$ne" : null
-                }
-            }
-        },
-        {
-            "$match" : {
+                },
                 "contacts.shortListedVendors" : {
                     "$elemMatch" : {
                         "$or" : [
@@ -94,6 +79,34 @@ async function task_3_1(db) {
             }
         },
         {
+            "$project" : {
+                "contacts.questions.id" : 1,
+                "contacts.questions.answers.loopInstances" : 1,
+                "contacts.questions.answers.primary_answer_value" : 1,
+                "contacts.questions.answers.primary_answer_text" : 1,
+                "contacts.questions.answers.criteria_value" : 1,
+                "contacts.questions.category_id" : 1,
+                "contacts.questions.criteria_value" : 1,
+                "contacts.datePublished" : 1,
+                "contacts.shortListedVendors" : 1,
+                "contacts.win_vendor" : 1,
+                "contacts.id" : 1
+            }
+        },
+        {
+            "$unwind" : "$contacts"
+        },
+        {
+            "$project" : {
+                "contacts.questions.id" : 1,
+                "contacts.questions.answers" : 1,
+                "contacts.questions.category_id" : 1,
+                "contacts.questions.criteria_value" : 1,
+                "contacts.win_vendor" : 1,
+                "contacts.id" : 1
+            }
+        },
+        {
             "$unwind" : "$contacts.questions"
         },
         {
@@ -103,11 +116,7 @@ async function task_3_1(db) {
                         105,
                         147
                     ]
-                }
-            }
-        },
-        {
-            "$match" : {
+                },
                 "$nor" : [
                     {
                         "contacts.questions.category_id" : 105,
@@ -144,17 +153,13 @@ async function task_3_1(db) {
         },
         {
             "$match" : {
-                "contacts.questions.answers.primary_answer_value" : {
+                "contacts.questions.answers.primary_answer_value": {
                     "$lt" : 9000
                 }
             }
         },
         {
-            "$unwind" : "$contacts.questions.answers.loopInstances"
-        },
-        {
             "$project" : {
-                "_id" : 1,
                 "contacts.id" : 1,
                 "contacts.questions.criteria_value" : 1,
                 "criteria_value" : {
@@ -163,50 +168,16 @@ async function task_3_1(db) {
                         "$contacts.questions.answers.criteria_value"
                     ]
                 },
-                "contacts.questions.label" : 1,
-                "contacts.questions.raw_text" : 1,
                 "contacts.questions.id" : 1,
                 "contacts.questions.answers" : 1,
                 "contacts.questions.category_id" : 1,
                 "contacts.win_vendor" : 1,
                 "clientWinner" : "$contacts.win_vendor.is_client",
-                "competitorWinner" : {
-                    "$eq" : [
-                        {
-                            "$cmp" : [
-                                {
-                                    "$and" : [
-                                        {
-                                            "$eq" : [
-                                                "$clientWinner",
-                                                false
-                                            ]
-                                        },
-                                        {
-                                            "$or" : [
-                                                {
-                                                    "$eq" : [
-                                                        "$contacts.questions.answers.loopInstances.loop_instance",
-                                                        "$contacts.win_vendor.value"
-                                                    ]
-                                                },
-                                                {
-                                                    "$eq" : [
-                                                        "$contacts.questions.category_id",
-                                                        147
-                                                    ]
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                },
-                                true
-                            ]
-                        },
-                        0
-                    ]
-                }
+                
             }
+        },
+        {
+            "$unwind" : "$contacts.questions.answers.loopInstances"
         },
         {
             "$match" : {
@@ -243,21 +214,35 @@ async function task_3_1(db) {
         {
             "$lookup" : {
                 "from" : "clientCriteria",
-                "localField" : "criteria_value",
-                "foreignField" : "value",
+                "let" : {"crit_val": "$criteria_value",},
+                "pipeline" : [
+                    {
+                        "$match" : {
+                            "versions.initiativeId" : ObjectId("58af4da0b310d92314627290")
+                        }
+                    },
+                    {
+                        "$project" : {
+                            "_id" : 0,
+                            "label" : 1,
+                            "definition" : 1,
+                            "versions" : 1,
+                            "value" : 1
+                        }
+                    },
+                    {
+                        "$match" : {
+                            "$expr" : {
+                                "$eq" : ["$value",  "$$crit_val" ]
+                            }
+                        }
+                    }
+                ],
                 "as" : "criteria"
             }
         },
         {
             "$unwind" : "$criteria"
-        },
-        {
-            "$unwind" : "$criteria.versions"
-        },
-        {
-            "$match" : {
-                "criteria.versions.initiativeId" : ObjectId("58af4da0b310d92314627290")
-            }
         },
         {
             "$group" : {
@@ -280,7 +265,9 @@ async function task_3_1(db) {
                         "text" : "$criteria.label",
                         "definition" : {
                             "$ifNull" : [
-                                "$criteria.versions.definition",
+                                {
+                                    "$arrayElemAt" : ["$criteria.versions.definition", 0]
+                                },
                                 "$criteria.definition"
                             ]
                         }
@@ -291,12 +278,12 @@ async function task_3_1(db) {
                 }
             }
         },
-        {$unwind: '$answers'},
+        {"$unwind" : '$answers'},
         {
-            $sort: {
-                'answer_text': 1,
-                'answers.question_id': 1,
-                'answers.answer_value': 1
+            "$sort" : {
+                'answer_text' : 1,
+                'answers.question_id' : 1,
+                'answers.answer_value' : 1
             }
         }
     ], {allowDiskUse:true}).toArray();
