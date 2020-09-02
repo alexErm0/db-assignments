@@ -96,7 +96,7 @@ async function task_1_4(db) {
             ) * 100, 5) AS "% of all orders"
         FROM Orders
         GROUP BY CustomerID
-        ORDER BY COUNT(OrderID) DESC, CustomerID
+        ORDER BY \`Total number of Orders\` DESC, CustomerID
     `);
     return result[0];
     /*throw new Error("Not implemented");*/
@@ -135,12 +135,12 @@ async function task_1_5(db) {
 async function task_1_6(db) {
     let result = await db.query(`
         SELECT
-           Products.ProductName,
-           Categories.CategoryName,
-           Suppliers.CompanyName as SupplierCompanyName
-        FROM ((Products
-            INNER JOIN Categories ON Products.CategoryID = Categories.CategoryID)
-            INNER JOIN Suppliers ON Products.SupplierID = Suppliers.SupplierID)
+           ProductName,
+           CategoryName,
+           CompanyName as SupplierCompanyName
+        FROM Products
+            INNER JOIN Categories ON Products.CategoryID = Categories.CategoryID
+            INNER JOIN Suppliers ON Products.SupplierID = Suppliers.SupplierID
         ORDER BY ProductName, SupplierCompanyName
     `);
     return result[0];
@@ -321,19 +321,20 @@ async function task_1_14(db) {
 async function task_1_15(db) {
     let result = await db.query(`
         SELECT
-            COUNT(IF(OrderDate LIKE "1997-01-%", 1, NULL)) as January,
-            COUNT(IF(OrderDate LIKE "1997-02-%", 1, NULL)) as February,
-            COUNT(IF(OrderDate LIKE "1997-03-%", 1, NULL)) as March,
-            COUNT(IF(OrderDate LIKE "1997-04-%", 1, NULL)) as April,
-            COUNT(IF(OrderDate LIKE "1997-05-%", 1, NULL)) as May,
-            COUNT(IF(OrderDate LIKE "1997-06-%", 1, NULL)) as June,
-            COUNT(IF(OrderDate LIKE "1997-07-%", 1, NULL)) as July,
-            COUNT(IF(OrderDate LIKE "1997-08-%", 1, NULL)) as August,
-            COUNT(IF(OrderDate LIKE "1997-09-%", 1, NULL)) as September,
-            COUNT(IF(OrderDate LIKE "1997-10-%", 1, NULL)) as October,
-            COUNT(IF(OrderDate LIKE "1997-11-%", 1, NULL)) as November,
-            COUNT(IF(OrderDate LIKE "1997-12-%", 1, NULL)) as December
+            COUNT(IF(MONTH(OrderDate) = 1, 1, NULL)) as January,
+            COUNT(IF(MONTH(OrderDate) = 2, 1, NULL)) as February,
+            COUNT(IF(MONTH(OrderDate) = 3, 1, NULL)) as March,
+            COUNT(IF(MONTH(OrderDate) = 4, 1, NULL)) as April,
+            COUNT(IF(MONTH(OrderDate) = 5, 1, NULL)) as May,
+            COUNT(IF(MONTH(OrderDate) = 6, 1, NULL)) as June,
+            COUNT(IF(MONTH(OrderDate) = 7, 1, NULL)) as July,
+            COUNT(IF(MONTH(OrderDate) = 8, 1, NULL)) as August,
+            COUNT(IF(MONTH(OrderDate) = 9, 1, NULL)) as September,
+            COUNT(IF(MONTH(OrderDate) = 10, 1, NULL)) as October,
+            COUNT(IF(MONTH(OrderDate) = 11, 1, NULL)) as November,
+            COUNT(IF(MONTH(OrderDate) = 12, 1, NULL)) as December
         FROM Orders
+        WHERE YEAR(OrderDate) = 1997
     `);
     return result[0];
 }
@@ -442,7 +443,7 @@ async function task_1_20(db) {
             INNER JOIN Orders ON Employees.EmployeeID = Orders.EmployeeID
             INNER JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
         GROUP BY Employees.EmployeeID
-        ORDER BY SUM(UnitPrice * Quantity) DESC
+        ORDER BY \`Amount, $\` DESC
         LIMIT 1
     `);
     return result[0];
@@ -462,7 +463,7 @@ async function task_1_21(db) {
         FROM Orders
             INNER JOIN OrderDetails ON Orders.OrderID = OrderDetails.OrderID
         GROUP BY Orders.OrderID
-        ORDER BY SUM(UnitPrice * Quantity) DESC
+        ORDER BY \`Maximum Purchase Amount, $\` DESC
         LIMIT 1
     `);
     return result[0];
