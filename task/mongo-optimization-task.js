@@ -16,7 +16,17 @@ const ObjectId = require('mongodb').ObjectID;
  * */
 async function before(db) {
     await db.collection('opportunities').createIndex({'initiativeId': 1});
-    await db.collection('opportunities').createIndex({'contacts': 1});
+    await db.collection('opportunities').createIndex({"contacts.questions.id" : 1});
+    await db.collection('opportunities').createIndex({"contacts.questions.answers.primary_answer_value" : 1});
+    await db.collection('opportunities').createIndex({"contacts.questions.answers.loopInstances" : 1});
+    await db.collection('opportunities').createIndex({"contacts.questions.answers.primary_answer_text" : 1});
+    await db.collection('opportunities').createIndex({"contacts.questions.answers.criteria_value" : 1});
+    await db.collection('opportunities').createIndex({"contacts.questions.category_id" : 1});
+    await db.collection('opportunities').createIndex({"contacts.questions.criteria_value" : 1});
+    await db.collection('opportunities').createIndex({"contacts.datePublished" : 1});
+    await db.collection('opportunities').createIndex({"contacts.shortListedVendors" : 1});
+    await db.collection('opportunities').createIndex({"contacts.win_vendor" : 1});
+    await db.collection('opportunities').createIndex({"contacts.id" : 1});
     await db.collection('clientCriteria').createIndex({'versions': 1});
     await db.collection('clientCriteria').createIndex({'definition': 1});
     await db.collection('clientCriteria').createIndex({'label': 1});
