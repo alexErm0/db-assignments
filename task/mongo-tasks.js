@@ -614,41 +614,11 @@ async function task_1_18(db) {
 async function task_1_19(db) {
     const result = await db.collection('orders').aggregate([
         {
-            $project: {
-                _id: 0,
-                CustomerID: 1,
-                OrderID: 1
-            }
-        },
-        {
             $lookup: {
                 from: "customers",
-                let: {"customerId": "$CustomerID"},
-                pipeline: [
-                    {
-                        $project: {
-                            _id: 0,
-                            "CustomerID": 1,
-                            "CompanyName": 1
-                        }
-                    },
-                    {
-                        $match: {
-                            $expr: {
-                                $eq: ["$CustomerID", "$$customerId"]
-                            }
-                        }
-                    }
-                ],
+                localField: "CustomerID",
+                foreignField: "CustomerID",
                 as: "Customers"
-            }
-        },
-        {
-            $project: {
-            _id: 0,
-            "Customers.CustomerID": 1,
-            "Customers.CompanyName": 1,
-            "OrderID": 1
             }
         },
         {
@@ -657,35 +627,9 @@ async function task_1_19(db) {
         {
             $lookup: {
                 from: "order-details",
-                let: {"orderId": "$OrderID"},
-                pipeline: [
-                    {
-                        $project: {
-                            _id: 0,
-                            "OrderID": 1,
-                            "UnitPrice": 1,
-                            "Quantity": 1
-                        }
-                    },
-                    {
-                        $match: {
-                            $expr: {
-                                $eq: ["$OrderID", "$$orderId"]
-                            }
-                        }
-                    }
-                ],
+                localField: "OrderID",
+                foreignField: "OrderID",
                 as: "OrderDetails"
-            }
-        },
-        {
-            $project: {
-                _id: 0,
-                "Customers.CustomerID": 1,
-                "Customers.CompanyName": 1,
-                "OrderDetails.OrderID": 1,
-                "OrderDetails.UnitPrice": 1,
-                "OrderDetails.Quantity": 1
             }
         },
         {
@@ -735,48 +679,16 @@ async function task_1_20(db) {
         {
             $lookup: {
                 from: "employees",
-                let: {"employeeId": "$EmployeeID"},
-                pipeline: [
-                    {
-                        $project: {
-                            _id: 0,
-                            "EmployeeID": 1,
-                            "FirstName": 1,
-                            "LastName": 1
-                        }
-                    },
-                    {
-                        $match: {
-                            $expr: {
-                                $eq: ["$EmployeeID", "$$employeeId"]
-                            }
-                        }
-                    }
-                ],
+                localField: "EmployeeID",
+                foreignField: "EmployeeID",
                 as: "Employees"
             }
         },
         {
             $lookup: {
                 from: "order-details",
-                let: {"orderId": "$OrderID"},
-                pipeline: [
-                    {
-                        $project: {
-                            _id: 0,
-                            "OrderID": 1,
-                            "UnitPrice": 1,
-                            "Quantity": 1
-                        }
-                    },
-                    {
-                        $match: {
-                            $expr: {
-                                $eq: ["$OrderID", "$$orderId"]
-                            }
-                        }
-                    }
-                ],
+                localField: "OrderID",
+                foreignField: "OrderID",
                 as: "OrderDetails"
             }
         },
@@ -858,26 +770,8 @@ async function task_1_22(db) {
         {
             $lookup: {
                 from: "order-details",
-                let: {orderID: "$OrderID"},
-                pipeline: [
-                    {
-                        $sort: {"UnitPrice": -1}
-                    },
-                    {
-                        $group: {
-                            _id: "$OrderID",
-                            "maxPrice": {$max: "$UnitPrice"},
-                            "ProductID": {$first: "$ProductID"}
-                        }
-                    },
-                    {
-                        $match: {
-                            $expr: {
-                                $eq: ["$_id", "$$orderID"]
-                            }
-                        }
-                    }
-                ],
+                localField: "OrderID",
+                foreignField: "OrderID",
                 as: "OrderDetails"
             }
         },
@@ -885,12 +779,12 @@ async function task_1_22(db) {
             $unwind: "$OrderDetails"
         },
         {
-            $sort: {"OrderDetails.maxPrice": -1}
+            $sort: {"OrderDetails.UnitPrice": -1}
         },
         {
             $group: {
                 _id: "$CustomerID",
-                "maxPrice": {$max: "$OrderDetails.maxPrice"},
+                "maxPrice": {$max: "$OrderDetails.UnitPrice"},
                 "productID": {$first: "$OrderDetails.ProductID"}
             }
         },
