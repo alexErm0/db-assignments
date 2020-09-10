@@ -21,7 +21,27 @@
  * Test timeout is increased to 15sec for the function.
  * */
 async function before(db) {
-    await db.collection('employees').ensureIndex({CustomerID: 1});
+    await db.collection('employees').createIndex({EmployeeID: 1});
+    await db.collection('employees').createIndex({FirstName: 1});
+    await db.collection('employees').createIndex({LastName: 1});
+    await db.collection('employees').createIndex({Title: 1});
+    await db.collection('employees').createIndex({ReportsTo: 1});
+    await db.collection('customers').createIndex({CustomerID: 1});
+    await db.collection('customers').createIndex({CompanyName: 1});
+    await db.collection('customers').createIndex({ContactName: 1});
+    await db.collection('orders').createIndex({CustomerID: 1});
+    await db.collection('orders').createIndex({OrderID: 1});
+    await db.collection('orders').createIndex({EmployeeID: 1});
+    await db.collection('orders').createIndex({OrderDate: 1});
+    await db.collection('orders').createIndex({ShipCountry: 1});
+    await db.collection('order-details').createIndex({OrderID: 1});
+    await db.collection('order-details').createIndex({ProductID: 1});
+    await db.collection('order-details').createIndex({UnitPrice: 1});
+    await db.collection('order-details').createIndex({Quantity: 1});
+    await db.collection('order-details').createIndex({Discount: 1});
+    await db.collection('products').createIndex({ProductID: 1});
+    await db.collection('products').createIndex({ProductName: 1});
+    await db.collection('products').createIndex({Discontinued: 1});
 }
 
 /**
@@ -594,6 +614,13 @@ async function task_1_18(db) {
 async function task_1_19(db) {
     const result = await db.collection('orders').aggregate([
         {
+            $project: {
+                _id: 0,
+                CustomerID: 1,
+                OrderID: 1
+            }
+        },
+        {
             $lookup: {
                 from: "customers",
                 let: {"customerId": "$CustomerID"},
@@ -615,6 +642,17 @@ async function task_1_19(db) {
                 ],
                 as: "Customers"
             }
+        },
+        {
+            $project: {
+            _id: 0,
+            "Customers.CustomerID": 1,
+            "Customers.CompanyName": 1,
+            "OrderID": 1
+            }
+        },
+        {
+            $unwind: "$Customers"
         },
         {
             $lookup: {
@@ -641,12 +679,22 @@ async function task_1_19(db) {
             }
         },
         {
+            $project: {
+                _id: 0,
+                "Customers.CustomerID": 1,
+                "Customers.CompanyName": 1,
+                "OrderDetails.OrderID": 1,
+                "OrderDetails.UnitPrice": 1,
+                "OrderDetails.Quantity": 1
+            }
+        },
+        {
             $unwind: "$OrderDetails"
         },
         {
             $group: {
-                _id: "$CustomerID",
-                company: {$push: {$arrayElemAt: ["$Customers.CompanyName", 0]}},
+                _id: "$Customers.CustomerID",
+                company: {$push: "$Customers.CompanyName"},
                 "TotalCount": {
                     $sum: {
                         $multiply: [
